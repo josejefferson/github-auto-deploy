@@ -1,0 +1,18 @@
+{
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "allowJs": true,
+    "target": "ES2016",
+    "lib": ["ES2015"],
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strict": true
+  }
+}
