@@ -1,17 +1,17 @@
-import {
-  sendStartDeployEmail,
-  sendSuccessDeployEmail,
-  sendErrorDeployEmail,
-  sendUndoDeployEmail,
-  sendStartUndoDeployEmail,
-  sendErrorUndoDeployEmail
-} from '../steps/email'
-import { sleep } from './helpers'
 import variables from '../config/variables'
-import { startServer, stopServer } from '../steps/server'
+import { backupServer, restoreLastBackup } from '../steps/backup'
+import {
+  sendErrorDeployEmail,
+  sendErrorUndoDeployEmail,
+  sendStartDeployEmail,
+  sendStartUndoDeployEmail,
+  sendSuccessDeployEmail,
+  sendUndoDeployEmail
+} from '../steps/email'
 import { gitPull, gitReset } from '../steps/git'
+import { startServer, stopServer } from '../steps/server'
 import { yarnBuild, yarnInstall } from '../steps/yarn'
-import { backupFailedServer, backupServer, restoreLastBackup } from '../steps/backup'
+import { log, sleep } from './helpers'
 
 export async function deploy() {
   variables.deployError = ''
@@ -24,15 +24,18 @@ export async function deploy() {
     .then(() => {
       const time = Math.round((Date.now() - variables.deployStartTime) / 1000)
       variables.deployTime = time
-      console.log(`[INFO] Deploy finalizado. Tempo: ${time} segundos`)
+      log('INFO', `Deploy finalizado. Tempo: ${time} segundos`)
     })
     .catch((err) => {
-      console.log('[ERROR] Ocorreu um erro no deploy:')
+      log('ERROR', 'Ocorreu um erro no deploy:')
       console.error(err)
     })
     .finally(() => {
       variables.deploying = false
-      if (variables.pendingDeploy) deploy()
+      if (variables.pendingDeploy) {
+        log('INFO', `Deploy pendente iniciado às ${new Date().toLocaleString()}`)
+        deploy()
+      }
     })
 }
 
@@ -58,6 +61,8 @@ export async function startDeploy() {
     await startServer() // Inicia o servidor
     sendSuccessDeployEmail() // Envia um e-mail avisando que houve sucesso no deploy
   } catch (err) {
+    log('ERROR', 'Ocorreu um erro ao fazer deploy, desfazendo')
+    console.error(err)
     variables.deployError = err
     sendErrorDeployEmail() // Envia um e-mail avisando que houve falha no deploy
     await undoDeploy() // Desfaz o deploy
@@ -66,6 +71,7 @@ export async function startDeploy() {
 
 /** Desfaz um deploy */
 export async function undoDeploy() {
+  log('INFO', 'Desfazendo deploy')
   try {
     sendStartUndoDeployEmail() // Envia um e-mail avisando que está desfazendo as alterações
     await stopServer() // Para o servidor
@@ -74,6 +80,8 @@ export async function undoDeploy() {
     await startServer() // Inicia o servidor
     sendUndoDeployEmail() // Envia um e-mail avisando que houve sucesso na restauração do servidor
   } catch (err) {
+    log('ERROR', 'Ocorreu um erro ao desfazer deploy')
+    console.error(err)
     variables.deployError = err
     sendErrorUndoDeployEmail() // Envia um e-mail avisando que está desfazendo as alterações
     await startServer() // Inicia o servidor

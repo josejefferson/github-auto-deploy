@@ -41,7 +41,7 @@ async function send(options: Mail.Options) {
   const emailTransporter = await transporter
   options = Object.assign(options, {
     from: {
-      name: variables.gmail.name,
+      name: variables.gmail.name || 'Sistema de deploy automático via GitHub',
       address: variables.gmail.email
     }
   })

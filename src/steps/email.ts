@@ -1,5 +1,6 @@
 import send from '../config/email'
 import variables from '../config/variables'
+import { log, random } from '../helpers/helpers'
 
 /**
  * Envia um e-mail avisando o início do deploy
@@ -61,12 +62,13 @@ export function sendStartUndoDeployEmail() {
  * Envia um e-mail avisando o sucesso de desfazer o deploy
  */
 export function sendUndoDeployEmail() {
+  const time = Math.round((Date.now() - variables.deployStartTime) / 1000)
   const title = '✅ Deploy desfeito'
   const body = `
 		O deploy da aplicação <b>${variables.appName}</b> foi desfeito com sucesso<br><br>
     <h4>DETALHES</h4>
     <ul>
-			<li><b>Tempo:</b> ${variables.deployTime} segundos</li>
+			<li><b>Tempo:</b> ${time} segundos</li>
     </ul>
     <h4>LOGS DO GIT</h4>
 		<pre>${variables.gitLogs}</pre>
@@ -95,21 +97,33 @@ export function sendErrorUndoDeployEmail() {
   sendEmail(title, body)
 }
 
+const footer = `
+<div style="padding-top: 10px; border-bottom: 1px solid #acacac;"></div>
+
+<div style="padding-top: 10px; color: #acacac">
+  Este email foi enviado automaticamente pelo sistema de deploy automático via GitHub.<br>
+  Não responder a este e-mail.<br>
+  Este NÃO é um e-mail oficial do GitHub Inc.<br>
+  <a href="https://github.com/josejefferson/github-auto-deploy" style="color: #acacac;">Link do projeto no GitHub</a>
+</div>
+`
+
 /**
  * Envia um e-mail
  */
+
 export function sendEmail(title: string, body: string) {
-  const fullTitle = `[#${++variables.emailCount}] ${variables.appName}: ${title}`
+  const fullTitle = `[#${random(1000, 9999)}] ${variables.appName}: ${title}`
   send({
     to: variables.gmail.receivers,
     subject: fullTitle,
-    html: body
+    html: body + footer
   })
     .then(() => {
-      console.log(`[INFO] E-mail "${title}" enviado`)
+      if (process.env.NODE_ENV === 'development') log('INFO', `E-mail "${fullTitle}" enviado`)
     })
     .catch((err) => {
-      console.log(`[INFO] Falha ao enviar e-mail "${title}":`)
+      log('INFO', `Falha ao enviar e-mail "${title}":`)
       console.error(err)
     })
 }

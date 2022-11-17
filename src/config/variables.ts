@@ -2,6 +2,7 @@ const variables: { [key: string]: any } = {
   secret: process.env.SECRET,
   branch: process.env.BRANCH || 'main',
   pathName: process.env.PATHNAME || '/',
+  folderPath: process.env.FOLDER_PATH || '',
   appName: process.env.APP_NAME || 'APP',
   serviceName: process.env.SERVICE_NAME,
   gmail: {
@@ -18,8 +19,7 @@ const variables: { [key: string]: any } = {
   deployTime: 0,
   deployError: '',
   gitLogs: '',
-  yarnLogs: '',
-  emailCount: 0
+  yarnLogs: ''
 }
 
 export default variables

@@ -1,12 +1,18 @@
 import variables from '../config/variables'
-import { run } from '../helpers/helpers'
+import { log, run } from '../helpers/helpers'
 
 /**
  * Instala as dependências
  */
 export async function yarnInstall() {
-  console.log('[INFO] Executando "yarn"')
+  log('INFO', 'Executando "yarn"')
   const { error, stdout, stderr } = await run('yarn')
+  variables.yarnLogs +=
+    `
++--------------+
+| YARN INSTALL |
++--------------+
+`.trim() + '\n'
   variables.yarnLogs += [stdout, stderr].join('\n') + '\n'
   if (error) throw error
 }
@@ -15,8 +21,14 @@ export async function yarnInstall() {
  * Faz o build da aplicação
  */
 export async function yarnBuild() {
-  console.log('[INFO] Executando "yarn build"')
+  log('INFO', 'Executando "yarn build"')
   const { error, stdout, stderr } = await run('yarn build')
+  variables.yarnLogs +=
+    `
++--------------+
+|  YARN BUILD  |
++--------------+
+`.trim() + '\n'
   variables.yarnLogs += [stdout, stderr].join('\n') + '\n'
   if (error) throw error
 }

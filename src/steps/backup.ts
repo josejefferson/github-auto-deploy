@@ -1,9 +1,9 @@
-import variables from '../config/variables'
-import { run } from '../helpers/helpers'
-import path from 'path'
-import { mkdirp } from 'fs-extra'
-import rimraf from 'rimraf'
 import fs from 'fs'
+import { mkdirp } from 'fs-extra'
+import path from 'path'
+import rimraf from 'rimraf'
+import variables from '../config/variables'
+import { log, run } from '../helpers/helpers'
 
 const MAX_BACKUPS = 10
 
@@ -12,10 +12,10 @@ const MAX_BACKUPS = 10
  * @param broken Servidor está com problemas?
  */
 export async function backupServer(broken = false) {
-  console.log(`[INFO] Fazendo backup do servidor${broken ? ' com problemas' : ''}`)
+  log('INFO', `Fazendo backup do servidor${broken ? ' com problemas' : ''}`)
 
-  const backupFolderName = path.basename(variables.pathName) + '-backups'
-  const backupFolder = path.join(variables.pathName, '..', backupFolderName)
+  const backupFolderName = path.basename(variables.folderPath) + '-backups'
+  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
   const backupFileName = `backup${broken ? '-broken' : ''}-${new Date().toISOString()}.tar.gz`
   const backupFile = path.join(backupFolder, backupFileName)
   await mkdirp(backupFolder) // Cria a pasta dos backups se não existe
@@ -24,7 +24,7 @@ export async function backupServer(broken = false) {
   const { error } = await run(`tar -czf "${backupFile}" .`)
   if (error) throw error
 
-  console.log('[SUCCESS] Backup concluído')
+  log('SUCCESS', 'Backup concluído')
 
   // Remove backups antigos
   removeOldBackups()
@@ -43,37 +43,42 @@ export async function backupFailedServer() {
 export async function restoreLastBackup() {
   await backupFailedServer()
 
-  console.log('[INFO] Restaurando backup')
+  log('INFO', 'Restaurando último backup funcionando')
 
   const backups = await listBackups()
   if (!backups.length) throw new Error('Não há backups para restaurar')
 
-  console.log('[INFO] Apagando servidor')
+  log('INFO', 'Apagando servidor')
   await new Promise<void>((resolve, reject) => {
-    rimraf(variables.pathName, (err) => {
+    rimraf(variables.folderPath, (err) => {
       if (err) return reject(err)
       resolve()
     })
   })
 
-  console.log('[INFO] Extraindo backup')
-  const backupFolderName = path.basename(variables.pathName) + '-backups'
-  const backupFolder = path.join(variables.pathName, '..', backupFolderName)
+  log('INFO', 'Extraindo backup')
+  const backupFolderName = path.basename(variables.folderPath) + '-backups'
+  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
   const backupFileName = backups[backups.length - 1]
   const backupFile = path.join(backupFolder, backupFileName)
+  await mkdirp(variables.folderPath) // Cria a pasta do servidor, caso não exista
 
-  const { error } = await run(`tar -xf "${backupFile}" -C "${variables.pathName}"`)
+  log('INFO', `Restaurando backup "${backupFileName}"`)
+  const { error } = await run(`tar -xf "${backupFile}" -C "${variables.folderPath}"`)
   if (error) throw error
 
-  console.log('[SUCCESS] Backup restaurado com sucesso')
+  log('SUCCESS', 'Backup restaurado com sucesso')
 }
 
 /**
  * Lista os arquivos de backup
  */
 async function listBackups() {
+  const backupFolderName = path.basename(variables.folderPath) + '-backups'
+  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
+
   const files = await new Promise<string[]>((resolve, reject) => {
-    fs.readdir(variables.pathName, (err, files) => {
+    fs.readdir(backupFolder, (err, files) => {
       if (err) return reject(err)
       resolve(files)
     })
@@ -96,8 +101,8 @@ async function listBackups() {
 async function removeOldBackups() {
   if (!isFinite(MAX_BACKUPS)) return
 
-  const backupFolderName = path.basename(variables.pathName) + '-backups'
-  const backupFolder = path.join(variables.pathName, '..', backupFolderName)
+  const backupFolderName = path.basename(variables.folderPath) + '-backups'
+  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
   const backups = await listBackups()
 
   if (backups.length > MAX_BACKUPS) {
