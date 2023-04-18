@@ -18,3 +18,12 @@ export async function startServer() {
   const { error } = await run(`sudo systemctl start ${variables.serviceName}`)
   if (error) log('WARNING', 'Falha ao iniciar o serviço:', error.message)
 }
+
+/**
+ * Reinicia o servidor
+ */
+export async function restartServer() {
+  log('INFO', 'Reiniciando serviço')
+  const { error } = await run(`sudo systemctl restart ${variables.serviceName}`)
+  if (error) log('WARNING', 'Falha ao reiniciar o serviço:', error.message)
+}

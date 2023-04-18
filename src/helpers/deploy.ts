@@ -10,7 +10,7 @@ import {
   sendUndoDeployEmail
 } from '../steps/email'
 import { gitPull, gitReset } from '../steps/git'
-import { startServer, stopServer } from '../steps/server'
+import { restartServer, startServer, stopServer } from '../steps/server'
 import { log, sleep } from './helpers'
 
 export async function deploy() {
@@ -50,16 +50,12 @@ export async function startDeploy() {
     startServer()
     return
   }
-  
+
   try {
     await gitReset() // Apaga qualquer alteração no git
     await gitPull() // Baixa as novas atualizações
-    // await yarnInstall() // Instala as dependências atualizadas
-    // await yarnBuild() // Faz o build da aplicação
-    await dockerBuild()
-    await stopServer() // Para o servidor
-    await sleep(3000) // Aguarda 3 segundos
-    await startServer() // Inicia o servidor
+    await dockerBuild() // Faz o bu8ld da aplicaão
+    await restartServer() // Reinicia o servidor
     sendSuccessDeployEmail() // Envia um e-mail avisando que houve sucesso no deploy
   } catch (err) {
     log('ERROR', 'Ocorreu um erro ao fazer deploy, desfazendo')
