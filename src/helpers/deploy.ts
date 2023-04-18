@@ -1,5 +1,6 @@
 import variables from '../config/variables'
-import { backupServer, restoreLastBackup } from '../steps/backup'
+import { restoreLastBackup } from '../steps/backup'
+import { dockerBuild } from '../steps/docker'
 import {
   sendErrorDeployEmail,
   sendErrorUndoDeployEmail,
@@ -10,7 +11,6 @@ import {
 } from '../steps/email'
 import { gitPull, gitReset } from '../steps/git'
 import { startServer, stopServer } from '../steps/server'
-import { yarnBuild, yarnInstall } from '../steps/yarn'
 import { log, sleep } from './helpers'
 
 export async function deploy() {
@@ -43,21 +43,22 @@ export async function deploy() {
 export async function startDeploy() {
   try {
     sendStartDeployEmail() // Envia um e-mail avisando que o deploy iniciou
-    await stopServer() // Para o servidor
-    await sleep(5000) // Aguarda 5 segundos
-    await backupServer() // Faz um backup do servidor
+    // await backupServer() // Faz um backup do servidor
   } catch (err) {
     variables.deployError = err
     sendErrorDeployEmail() // Envia um e-mail avisando que houve falha no deploy
     startServer()
     return
   }
-
+  
   try {
     await gitReset() // Apaga qualquer alteração no git
     await gitPull() // Baixa as novas atualizações
-    await yarnInstall() // Instala as dependências atualizadas
-    await yarnBuild() // Faz o build da aplicação
+    // await yarnInstall() // Instala as dependências atualizadas
+    // await yarnBuild() // Faz o build da aplicação
+    await dockerBuild()
+    await stopServer() // Para o servidor
+    await sleep(3000) // Aguarda 3 segundos
     await startServer() // Inicia o servidor
     sendSuccessDeployEmail() // Envia um e-mail avisando que houve sucesso no deploy
   } catch (err) {
@@ -65,7 +66,7 @@ export async function startDeploy() {
     console.error(err)
     variables.deployError = err
     sendErrorDeployEmail() // Envia um e-mail avisando que houve falha no deploy
-    await undoDeploy() // Desfaz o deploy
+    // await undoDeploy() // Desfaz o deploy
   }
 }
 

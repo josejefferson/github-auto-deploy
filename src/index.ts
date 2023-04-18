@@ -1,4 +1,5 @@
 console.clear()
+process.on('uncaughtException', console.error)
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -7,6 +8,7 @@ import variables from './config/variables'
 import { deploy } from './helpers/deploy'
 import { log } from './helpers/helpers'
 import verifySecret from './helpers/verify-secret'
+
 const app = express()
 const router = express.Router()
 
