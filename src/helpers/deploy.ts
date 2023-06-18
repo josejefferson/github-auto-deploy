@@ -1,4 +1,4 @@
-import variables from '../config/variables'
+import { state } from '../config/config'
 import { backupServer, restoreLastBackup } from '../steps/backup'
 import {
   sendErrorDeployEmail,
@@ -8,82 +8,96 @@ import {
   sendSuccessDeployEmail,
   sendUndoDeployEmail
 } from '../steps/email'
-import { gitPull, gitReset } from '../steps/git'
+import { pull, resetAndClean } from '../steps/update-code'
 import { startServer, stopServer } from '../steps/server'
-import { yarnBuild, yarnInstall } from '../steps/yarn'
+import { build, install } from '../steps/install-and-build'
+import { IAppState } from '../types'
 import { log, sleep } from './helpers'
 
-export async function deploy() {
-  variables.deployError = ''
-  variables.gitLogs = ''
-  variables.yarnLogs = ''
-  variables.deploying = true
-  variables.deployStartTime = Date.now()
-  variables.pendingDeploy = false
-  startDeploy()
+export async function deploy(app: IAppState) {
+  app.deployError = ''
+  app.logs.reset = ''
+  app.logs.clean = ''
+  app.logs.pull = ''
+  app.logs.install = ''
+  app.logs.build = ''
+  app.deploying = true
+  app.deployStartTime = Date.now()
+  app.pendingDeploy = false
+  startDeploy(app)
     .then(() => {
-      const time = Math.round((Date.now() - variables.deployStartTime) / 1000)
-      variables.deployTime = time
-      log('INFO', `Deploy finalizado. Tempo: ${time} segundos`)
+      const time = Math.round((Date.now() - app.deployStartTime) / 1000)
+      app.deployTime = time
+      log('OK', `Deploy finalizado. Tempo: ${time} segundos`)
     })
     .catch((err) => {
       log('ERROR', 'Ocorreu um erro no deploy:')
       console.error(err)
     })
     .finally(() => {
-      variables.deploying = false
-      if (variables.pendingDeploy) {
-        log('INFO', `Deploy pendente iniciado às ${new Date().toLocaleString()}`)
-        deploy()
+      app.deploying = false
+      const nextDeploy = state.apps.find((app) => app.pendingDeploy)
+      if (nextDeploy) {
+        log(
+          'INFO',
+          `Deploy pendente da aplicação "${
+            nextDeploy.displayName
+          }" iniciado às ${new Date().toLocaleString()}`
+        )
+        deploy(nextDeploy)
       }
     })
 }
 
 /** Faz um deploy */
-export async function startDeploy() {
+export async function startDeploy(app: IAppState) {
   try {
-    sendStartDeployEmail() // Envia um e-mail avisando que o deploy iniciou
-    await stopServer() // Para o servidor
-    await sleep(5000) // Aguarda 5 segundos
-    await backupServer() // Faz um backup do servidor
-  } catch (err) {
-    variables.deployError = err
-    sendErrorDeployEmail() // Envia um e-mail avisando que houve falha no deploy
-    startServer()
+    sendStartDeployEmail(app) // Envia um e-mail avisando que o deploy iniciou
+    await stopServer(app) // Para o servidor
+    await sleep(3000) // Aguarda 3 segundos
+    await backupServer(app) // Faz um backup do servidor
+  } catch (err: any) {
+    app.status = 'error'
+    app.deployError = err?.message + '\n' + err?.stack
+    sendErrorDeployEmail(app) // Envia um e-mail avisando que houve falha no deploy
+    startServer(app)
     return
   }
 
   try {
-    await gitReset() // Apaga qualquer alteração no git
-    await gitPull() // Baixa as novas atualizações
-    await yarnInstall() // Instala as dependências atualizadas
-    await yarnBuild() // Faz o build da aplicação
-    await startServer() // Inicia o servidor
-    sendSuccessDeployEmail() // Envia um e-mail avisando que houve sucesso no deploy
-  } catch (err) {
-    log('ERROR', 'Ocorreu um erro ao fazer deploy, desfazendo')
+    await resetAndClean(app) // Apaga qualquer alteração no git
+    await pull(app) // Baixa as novas atualizações
+    await install(app) // Instala as dependências atualizadas
+    await build(app) // Faz o build da aplicação
+    await startServer(app) // Inicia o servidor
+    sendSuccessDeployEmail(app) // Envia um e-mail avisando que houve sucesso no deploy
+  } catch (err: any) {
+    log('ERROR', 'Ocorreu um erro ao fazer o deploy')
     console.error(err)
-    variables.deployError = err
-    sendErrorDeployEmail() // Envia um e-mail avisando que houve falha no deploy
-    await undoDeploy() // Desfaz o deploy
+    app.deployError = err?.message + '\n' + err?.stack
+    sendErrorDeployEmail(app) // Envia um e-mail avisando que houve falha no deploy
+    await undoDeploy(app) // Desfaz o deploy
   }
 }
 
 /** Desfaz um deploy */
-export async function undoDeploy() {
+export async function undoDeploy(app: IAppState) {
+  if (app.backupAbsolutePath === null || !app.undoWhenFailed) return
   log('INFO', 'Desfazendo deploy')
   try {
-    sendStartUndoDeployEmail() // Envia um e-mail avisando que está desfazendo as alterações
-    await stopServer() // Para o servidor
-    await sleep(5000) // Aguarda 5 segundos
-    await restoreLastBackup() // Restaura o último backup
-    await startServer() // Inicia o servidor
-    sendUndoDeployEmail() // Envia um e-mail avisando que houve sucesso na restauração do servidor
-  } catch (err) {
+    sendStartUndoDeployEmail(app) // Envia um e-mail avisando que está desfazendo as alterações
+    await stopServer(app) // Para o servidor
+    await sleep(3000) // Aguarda 3 segundos
+    await restoreLastBackup(app) // Restaura o último backup
+    await startServer(app) // Inicia o servidor
+    sendUndoDeployEmail(app) // Envia um e-mail avisando que houve sucesso na restauração do servidor
+    app.status = 'restored'
+  } catch (err: any) {
     log('ERROR', 'Ocorreu um erro ao desfazer deploy')
     console.error(err)
-    variables.deployError = err
-    sendErrorUndoDeployEmail() // Envia um e-mail avisando que está desfazendo as alterações
-    await startServer() // Inicia o servidor
+    app.deployError = err?.message + '\n' + err?.stack
+    sendErrorUndoDeployEmail(app) // Envia um e-mail avisando houve um erro ao desfazer as alterações
+    await startServer(app) // Inicia o servidor
+    app.status = 'error'
   }
 }

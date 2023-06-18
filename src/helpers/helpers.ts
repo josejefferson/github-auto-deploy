@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import { exec } from 'child_process'
-import variables from '../config/variables'
+import { IAppState } from '../types'
 
 export function sleep(time: number) {
   return new Promise((resolve) => {
@@ -8,10 +8,10 @@ export function sleep(time: number) {
   })
 }
 
-export function run(command: string) {
+export function run(app: IAppState, command: string) {
   if (process.env.NODE_ENV === 'development') console.log('$', command)
   return new Promise<{ error: any; stdout: string; stderr: string }>((resolve) => {
-    exec(command, { cwd: variables.folderPath }, (error, stdout, stderr) => {
+    exec(command, { cwd: app.folderAbsolutePath }, (error, stdout, stderr) => {
       resolve({ error, stdout, stderr })
     })
   })
@@ -59,4 +59,20 @@ export function log(level: string, ...contents: any[]) {
   }
   str += ']'
   console.log(str, ...contents)
+}
+
+export function makeEmailLogs(app: IAppState) {
+  let text = ''
+
+  if (app.logs.reset || app.logs.clean || app.logs.pull || app.logs.install || app.logs.build) {
+    text += `<h3>LOGS</h3>`
+  }
+
+  if (app.logs.reset) text += `<h4>RESET (${app.resetCommand})</h4><pre>${app.logs.reset}</pre>`
+  if (app.logs.clean) text += `<h4>CLEAN (${app.cleanCommand})</h4><pre>${app.logs.clean}</pre>`
+  if (app.logs.pull) text += `<h4>PULL (${app.pullCommand})</h4><pre>${app.logs.pull}</pre>`
+  if (app.logs.install)
+    text += `<h4>INSTALL (${app.installCommand})</h4><pre>${app.logs.install}</pre>`
+  if (app.logs.build) text += `<h4>BUILD (${app.buildCommand})</h4><pre>${app.logs.build}</pre>`
+  return text
 }

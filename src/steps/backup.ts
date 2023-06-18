@@ -2,8 +2,8 @@ import fs from 'fs'
 import { mkdirp } from 'fs-extra'
 import path from 'path'
 import rimraf from 'rimraf'
-import variables from '../config/variables'
 import { log, run } from '../helpers/helpers'
+import { IAppState } from '../types'
 
 const MAX_BACKUPS = 10
 
@@ -11,60 +11,69 @@ const MAX_BACKUPS = 10
  * Faz um backup do servidor
  * @param broken Servidor está com problemas?
  */
-export async function backupServer(broken = false) {
+export async function backupServer(app: IAppState, broken = false) {
+  if (app.backupAbsolutePath === null) return
+  app.status = 'backup'
   log('INFO', `Fazendo backup do servidor${broken ? ' com problemas' : ''}`)
 
-  const backupFolderName = path.basename(variables.folderPath) + '-backups'
-  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
+  const backupFolderName = path.basename(app.folderAbsolutePath) + '-backups'
+  const backupFolder =
+    app.backupAbsolutePath || path.join(app.folderAbsolutePath, '..', backupFolderName)
   const backupFileName = `backup${broken ? '-broken' : ''}-${new Date().toISOString()}.tar.gz`
   const backupFile = path.join(backupFolder, backupFileName)
   await mkdirp(backupFolder) // Cria a pasta dos backups se não existe
 
   // Faz o backup
-  const { error } = await run(`tar -czf "${backupFile}" .`)
+  const { error } = await run(app, `tar -czf "${backupFile}" .`)
   if (error) throw error
 
   log('SUCCESS', 'Backup concluído')
 
   // Remove backups antigos
-  removeOldBackups()
+  removeOldBackups(app)
 }
 
 /**
  * Faz um backup do servidor com problemas
  */
-export async function backupFailedServer() {
-  return backupServer(true)
+export async function backupFailedServer(app: IAppState) {
+  if (app.backupAbsolutePath === null) return
+  return backupServer(app, true)
 }
 
 /**
  * Restaura um backup
  */
-export async function restoreLastBackup() {
-  await backupFailedServer()
+export async function restoreLastBackup(app: IAppState) {
+  if (app.backupAbsolutePath === null) return
+  if (!app.undoWhenFailed) return
+
+  app.status = 'undo'
+  await backupFailedServer(app)
 
   log('INFO', 'Restaurando último backup funcionando')
 
-  const backups = await listBackups()
+  const backups = await listBackups(app)
   if (!backups.length) throw new Error('Não há backups para restaurar')
 
   log('INFO', 'Apagando servidor')
   await new Promise<void>((resolve, reject) => {
-    rimraf(variables.folderPath, (err) => {
+    rimraf(app.folderAbsolutePath, (err) => {
       if (err) return reject(err)
       resolve()
     })
   })
 
   log('INFO', 'Extraindo backup')
-  const backupFolderName = path.basename(variables.folderPath) + '-backups'
-  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
+  const backupFolderName = path.basename(app.folderAbsolutePath) + '-backups'
+  const backupFolder =
+    app.backupAbsolutePath || path.join(app.folderAbsolutePath, '..', backupFolderName)
   const backupFileName = backups[backups.length - 1]
   const backupFile = path.join(backupFolder, backupFileName)
-  await mkdirp(variables.folderPath) // Cria a pasta do servidor, caso não exista
+  await mkdirp(app.folderAbsolutePath) // Cria a pasta do servidor, caso não exista
 
   log('INFO', `Restaurando backup "${backupFileName}"`)
-  const { error } = await run(`tar -xf "${backupFile}" -C "${variables.folderPath}"`)
+  const { error } = await run(app, `tar -xf "${backupFile}" -C "${app.folderAbsolutePath}"`)
   if (error) throw error
 
   log('SUCCESS', 'Backup restaurado com sucesso')
@@ -73,9 +82,10 @@ export async function restoreLastBackup() {
 /**
  * Lista os arquivos de backup
  */
-async function listBackups() {
-  const backupFolderName = path.basename(variables.folderPath) + '-backups'
-  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
+async function listBackups(app: IAppState) {
+  const backupFolderName = path.basename(app.folderAbsolutePath) + '-backups'
+  const backupFolder =
+    app.backupAbsolutePath || path.join(app.folderAbsolutePath, '..', backupFolderName)
 
   const files = await new Promise<string[]>((resolve, reject) => {
     fs.readdir(backupFolder, (err, files) => {
@@ -98,12 +108,13 @@ async function listBackups() {
 /**
  * Remove backups antigos
  */
-async function removeOldBackups() {
+async function removeOldBackups(app: IAppState) {
   if (!isFinite(MAX_BACKUPS)) return
 
-  const backupFolderName = path.basename(variables.folderPath) + '-backups'
-  const backupFolder = path.join(variables.folderPath, '..', backupFolderName)
-  const backups = await listBackups()
+  const backupFolderName = path.basename(app.folderAbsolutePath) + '-backups'
+  const backupFolder =
+    app.backupAbsolutePath || path.join(app.folderAbsolutePath, '..', backupFolderName)
+  const backups = await listBackups(app)
 
   if (backups.length > MAX_BACKUPS) {
     const overflow = backups.length - MAX_BACKUPS // Backups em excesso

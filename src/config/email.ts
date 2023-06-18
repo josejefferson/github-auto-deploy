@@ -1,17 +1,19 @@
 import { OAuth2Client } from 'google-auth-library'
 import nodemailer from 'nodemailer'
 import Mail from 'nodemailer/lib/mailer'
-import variables from './variables'
+import { config } from './config'
 
 async function createTransporter() {
+  if (!config.gmail) return null
+
   const oauth2Client = new OAuth2Client(
-    variables.gmail.clientId,
-    variables.gmail.clientSecret,
+    config.gmail.clientID,
+    config.gmail.clientSecret,
     'https://developers.google.com/oauthplayground'
   )
 
   oauth2Client.setCredentials({
-    refresh_token: variables.gmail.refreshToken // eslint-disable-line camelcase
+    refresh_token: config.gmail.refreshToken // eslint-disable-line camelcase
   })
 
   const accessToken = await new Promise((resolve, reject) => {
@@ -25,11 +27,11 @@ async function createTransporter() {
     service: 'gmail',
     auth: {
       type: 'OAuth2',
-      user: variables.gmail.email,
+      user: config.gmail.email,
       accessToken,
-      clientId: variables.gmail.clientId,
-      clientSecret: variables.gmail.clientSecret,
-      refreshToken: variables.gmail.refreshToken
+      clientId: config.gmail.clientID,
+      clientSecret: config.gmail.clientSecret,
+      refreshToken: config.gmail.refreshToken
     }
   } as any)
 
@@ -39,10 +41,12 @@ async function createTransporter() {
 const transporter = createTransporter()
 async function send(options: Mail.Options) {
   const emailTransporter = await transporter
+  if (!config.gmail || !emailTransporter) return
+
   options = Object.assign(options, {
     from: {
-      name: variables.gmail.name || 'Sistema de deploy automático via GitHub',
-      address: variables.gmail.email
+      name: config.gmail.name,
+      address: config.gmail.email
     }
   })
 

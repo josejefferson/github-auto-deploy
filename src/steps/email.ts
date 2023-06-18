@@ -1,100 +1,87 @@
+import { config } from '../config/config'
 import send from '../config/email'
-import variables from '../config/variables'
-import { log, random } from '../helpers/helpers'
+import { log, makeEmailLogs, random } from '../helpers/helpers'
+import { IAppState } from '../types'
 
 /**
  * Envia um e-mail avisando o início do deploy
  */
-export function sendStartDeployEmail() {
+export function sendStartDeployEmail(app: IAppState) {
   const title = `Deploy iniciado`
   const body = `O deploy da aplicação <b>${
-    variables.appName
+    app.displayName
   }</b> foi iniciado às ${new Date().toLocaleString()}`
-  sendEmail(title, body)
+  sendEmail(app, title, body)
 }
 
 /**
  * Envia um e-mail avisando o sucesso do deploy
  */
-export function sendSuccessDeployEmail() {
+export function sendSuccessDeployEmail(app: IAppState) {
   const title = `✅ Deploy finalizado com sucesso`
-  const body = `
-		O deploy da aplicação <b>${variables.appName}</b> foi finalizado com sucesso!<br><br>
-    <h4>DETALHES</h4>
+  let body = `
+		O deploy da aplicação <b>${app.displayName}</b> foi finalizado com sucesso!<br><br>
+    <h3>DETALHES</h3>
     <ul>
-			<li><b>Tempo:</b> ${variables.deployTime} segundos</li>
+			<li><b>Tempo:</b> ${app.deployTime} segundos</li>
     </ul>
-    <h4>LOGS DO GIT</h4>
-		<pre>${variables.gitLogs}</pre>
-		<h4>LOGS DO YARN</h4>
-		<pre>${variables.yarnLogs}</pre>
 	`
-  sendEmail(title, body)
+  body += makeEmailLogs(app)
+  sendEmail(app, title, body)
 }
 
 /**
  * Envia um e-mail avisando o erro do deploy
  */
-export function sendErrorDeployEmail() {
+export function sendErrorDeployEmail(app: IAppState) {
   const title = '❌ Erro ao fazer deploy'
-  const body = `
-		Ocorreu um erro durante o deploy da aplicação <b>${variables.appName}</b><br><br>
-    <h4>DETALHES DO ERRO</h4>
-    <pre>${variables.deployError?.message + '\n\n' + variables.deployError?.stack}</pre>
-    <h4>LOGS DO GIT</h4>
-		<pre>${variables.gitLogs}</pre>
-		<h4>LOGS DO YARN</h4>
-		<pre>${variables.yarnLogs}</pre>
+  let body = `
+		Ocorreu um erro durante o deploy da aplicação <b>${app.displayName}</b><br><br>
+    <h3>DETALHES DO ERRO</h3>
+    <pre>${app.deployError}</pre>
 	`
-  sendEmail(title, body)
+  body += makeEmailLogs(app)
+  sendEmail(app, title, body)
 }
 
 /**
  * Envia um e-mail avisando o início de desfazer o deploy
  */
-export function sendStartUndoDeployEmail() {
+export function sendStartUndoDeployEmail(app: IAppState) {
   const title = '↩ Desfazendo o deploy'
-  const body = `Desfazendo o último deploy da aplicação <b>${variables.appName}</b>`
-  sendEmail(title, body)
+  const body = `Desfazendo o último deploy da aplicação <b>${app.displayName}</b>`
+  sendEmail(app, title, body)
 }
 
 /**
  * Envia um e-mail avisando o sucesso de desfazer o deploy
  */
-export function sendUndoDeployEmail() {
-  const time = Math.round((Date.now() - variables.deployStartTime) / 1000)
+export function sendUndoDeployEmail(app: IAppState) {
+  const time = Math.round((Date.now() - app.deployStartTime) / 1000)
   const title = '✅ Deploy desfeito'
-  const body = `
-		O deploy da aplicação <b>${variables.appName}</b> foi desfeito com sucesso<br><br>
-    <h4>DETALHES</h4>
+  let body = `
+		O deploy da aplicação <b>${app.displayName}</b> foi desfeito com sucesso<br><br>
+    <h3>DETALHES</h3>
     <ul>
 			<li><b>Tempo:</b> ${time} segundos</li>
     </ul>
-    <h4>LOGS DO GIT</h4>
-		<pre>${variables.gitLogs}</pre>
-		<h4>LOGS DO YARN</h4>
-		<pre>${variables.yarnLogs}</pre>
 	`
-  sendEmail(title, body)
+  body += makeEmailLogs(app)
+  sendEmail(app, title, body)
 }
 
 /**
  * Envia um e-mail avisando o erro de desfazer o deploy
  */
-export function sendErrorUndoDeployEmail() {
+export function sendErrorUndoDeployEmail(app: IAppState) {
   const title = '❌ Erro ao desfazer deploy'
-  const body = `
-		Ocorreu um erro durante o processo de desfazer deploy da aplicação <b>${
-      variables.appName
-    }</b><br><br>
-    <h4>DETALHES DO ERRO</h4>
-    <pre>${variables.deployError?.message + '\n\n' + variables.deployError?.stack}</pre>
-    <h4>LOGS DO GIT</h4>
-		<pre>${variables.gitLogs}</pre>
-		<h4>LOGS DO YARN</h4>
-		<pre>${variables.yarnLogs}</pre>
+  let body = `
+		Ocorreu um erro durante o processo de desfazer deploy da aplicação <b>${app.displayName}</b><br><br>
+    <h3>DETALHES DO ERRO</h3>
+    <pre>${app.deployError}</pre>
 	`
-  sendEmail(title, body)
+  body += makeEmailLogs(app)
+  sendEmail(app, title, body)
 }
 
 const footer = `
@@ -112,13 +99,11 @@ const footer = `
  * Envia um e-mail
  */
 
-export function sendEmail(title: string, body: string) {
-  const fullTitle = `[#${random(1000, 9999)}] ${variables.appName}: ${title}`
-  send({
-    to: variables.gmail.receivers,
-    subject: fullTitle,
-    html: body + footer
-  })
+export function sendEmail(app: IAppState, title: string, body: string) {
+  const to = app.gmailReceivers || config.gmail?.receivers || []
+  if (!to.length) return
+  const fullTitle = `[#${random(1000, 9999)}] ${app.displayName}: ${title}`
+  send({ to, subject: fullTitle, html: body + footer })
     .then(() => {
       if (process.env.NODE_ENV === 'development') log('INFO', `E-mail "${fullTitle}" enviado`)
     })
