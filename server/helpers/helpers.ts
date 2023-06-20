@@ -1,3 +1,4 @@
+import { compareSync } from 'bcrypt'
 import chalk from 'chalk'
 import { exec } from 'child_process'
 import { IAppState } from '../types'
@@ -65,7 +66,7 @@ export function makeEmailLogs(app: IAppState) {
   let text = ''
 
   if (app.logs.reset || app.logs.clean || app.logs.pull || app.logs.install || app.logs.build) {
-    text += `<h3>LOGS</h3>`
+    text += '<h3>LOGS</h3>'
   }
 
   if (app.logs.reset) text += `<h4>RESET (${app.resetCommand})</h4><pre>${app.logs.reset}</pre>`
@@ -75,4 +76,24 @@ export function makeEmailLogs(app: IAppState) {
     text += `<h4>INSTALL (${app.installCommand})</h4><pre>${app.logs.install}</pre>`
   if (app.logs.build) text += `<h4>BUILD (${app.buildCommand})</h4><pre>${app.logs.build}</pre>`
   return text
+}
+
+export function getDeepValue(obj: any, path: string) {
+  let result = obj
+  const paths = path.split('.')
+  for (const p of paths) {
+    if (result === null || result === undefined) return
+    result = result[p]
+  }
+  return result
+}
+
+export function authorizer(users: any) {
+  return (user: string, password: string) => {
+    if (users[user] === undefined) {
+      return false
+    }
+    const correct = compareSync(password, users[user])
+    return correct
+  }
 }

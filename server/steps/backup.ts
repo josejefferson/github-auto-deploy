@@ -4,6 +4,7 @@ import path from 'path'
 import rimraf from 'rimraf'
 import { log, run } from '../helpers/helpers'
 import { IAppState } from '../types'
+import { sendUpdate } from '../config/realtime'
 
 const MAX_BACKUPS = 10
 
@@ -14,6 +15,7 @@ const MAX_BACKUPS = 10
 export async function backupServer(app: IAppState, broken = false) {
   if (app.backupAbsolutePath === null) return
   app.status = 'backup'
+  sendUpdate(app, 'status')
   log('INFO', `Fazendo backup do servidor${broken ? ' com problemas' : ''}`)
 
   const backupFolderName = path.basename(app.folderAbsolutePath) + '-backups'
@@ -49,6 +51,7 @@ export async function restoreLastBackup(app: IAppState) {
   if (!app.undoWhenFailed) return
 
   app.status = 'undo'
+  sendUpdate(app, 'status')
   await backupFailedServer(app)
 
   log('INFO', 'Restaurando último backup funcionando')

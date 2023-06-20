@@ -2,8 +2,9 @@ import { Request, Response } from 'express'
 import { state } from '../config/config'
 import { log } from '../helpers/helpers'
 import { deploy } from '../helpers/deploy'
+import { sendUpdate } from '../config/realtime'
 
-export default function (req: Request, res: Response) {
+export default function startDeploy(req: Request, res: Response) {
   if (
     process.env.NODE_ENV !== 'development' &&
     req.body?.ref !== `refs/heads/${req.deployApp.gitBranch}`
@@ -16,6 +17,7 @@ export default function (req: Request, res: Response) {
   }
 
   req.deployApp.pendingDeploy = true
+  sendUpdate(req.deployApp, 'pendingDeploy')
 
   const busy = state.apps.some((app) => app.deploying)
   if (!busy) {

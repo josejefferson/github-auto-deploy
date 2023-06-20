@@ -3,7 +3,10 @@ import { log } from './helpers'
 import crypto from 'crypto'
 
 export default function verifySecret(req: Request, res: Response, next: NextFunction) {
-  log('EVENT', `Requisição recebida da aplicação "${req.deployApp.displayName}", verificando assinatura...`)
+  log(
+    'EVENT',
+    `Requisição recebida da aplicação "${req.deployApp.displayName}", verificando assinatura...`
+  )
   const SECRET = req.deployApp.githubWebhookSecret
 
   try {

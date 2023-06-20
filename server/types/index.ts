@@ -16,6 +16,11 @@ export interface IApp {
   buildCommand: string | null
   undoWhenFailed: boolean
 }
+export interface IUser {
+  name: string
+  username: string
+  password: string
+}
 
 export interface IConfig {
   urlPath: string
@@ -29,6 +34,7 @@ export interface IConfig {
     receivers: string[]
   } | null
   apps: IApp[]
+  users: IUser[]
 }
 
 export interface IAppState extends IApp {

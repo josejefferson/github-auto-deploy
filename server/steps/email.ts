@@ -7,7 +7,7 @@ import { IAppState } from '../types'
  * Envia um e-mail avisando o início do deploy
  */
 export function sendStartDeployEmail(app: IAppState) {
-  const title = `Deploy iniciado`
+  const title = 'Deploy iniciado'
   const body = `O deploy da aplicação <b>${
     app.displayName
   }</b> foi iniciado às ${new Date().toLocaleString()}`
@@ -18,7 +18,7 @@ export function sendStartDeployEmail(app: IAppState) {
  * Envia um e-mail avisando o sucesso do deploy
  */
 export function sendSuccessDeployEmail(app: IAppState) {
-  const title = `✅ Deploy finalizado com sucesso`
+  const title = '✅ Deploy finalizado com sucesso'
   let body = `
 		O deploy da aplicação <b>${app.displayName}</b> foi finalizado com sucesso!<br><br>
     <h3>DETALHES</h3>

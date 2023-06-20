@@ -40,7 +40,14 @@ const configSchema = object({
       buildCommand: string().nullable().default('yarn build'),
       undoWhenFailed: boolean().default(true)
     }).required()
-  ).required()
+  ).required(),
+  users: array(
+    object({
+      name: string().required(),
+      username: string().required(),
+      password: string().required()
+    })
+  ).default([])
 })
 
 export default function validateConfig(config: any) {
