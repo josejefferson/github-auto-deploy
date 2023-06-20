@@ -1,7 +1,6 @@
-import express, { Request, Response } from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import { sseMiddleware } from 'express-sse-middleware'
 import EventBuilder from 'express-sse-middleware/dist/EventBuilder'
-import next from 'next'
 import { authorizer, log } from '../helpers/helpers'
 import verifySecret from '../helpers/verify-secret'
 import injectApp from '../middleware/inject-app'
@@ -25,10 +24,16 @@ app.use(sseMiddleware)
 
 app.use(config.urlPath, router)
 
+const users: Record<string, string> = {}
+config.users.forEach((user) => {
+  users[user.username] = user.password
+})
+
 const auth =
   process.env.NODE_ENV !== 'development'
     ? expressBasicAuth({
-        authorizer: authorizer(config.users)
+        authorizer: authorizer(users),
+        challenge: true
       })
     : []
 
@@ -53,11 +58,16 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Next.JS
-const nextApp = next({ dev: true })
-const nextHandle = nextApp.getRequestHandler()
-nextApp.prepare().catch(console.error)
-app.get('*', auth, (req: Request, res: Response) => {
-  return nextHandle(req, res)
+
+const handler =
+  process.env.NODE_ENV === 'development'
+    ? import('./next-handler')
+    : Promise.resolve({ default: express.static('out') })
+
+app.get('*', auth, (req: Request, res: Response, next: NextFunction) => {
+  handler.then(({ default: handler }) => {
+    return handler(req, res, next as any)
+  })
 })
 
 app.listen(config.port, () => {

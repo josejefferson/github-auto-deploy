@@ -5,5 +5,6 @@
 ```sh
 git clone https://github.com/josejefferson/github-auto-deploy
 cd github-auto-deploy
-yarn
+yarn --prod
+yarn start
 ```

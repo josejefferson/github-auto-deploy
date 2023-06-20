@@ -3,7 +3,6 @@ config.yml
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 .env
-/dist/
 /public/sw.js
 /public/workbox-*.js
 
@@ -17,7 +16,6 @@ config.yml
 
 # next.js
 /.next/
-/out/
 /temp/
 
 # logs
