@@ -13,7 +13,7 @@ export default function startDeploy(req: Request, res: Response) {
       'WARNING',
       `O commit não pertence à branch ${req.deployApp.gitBranch}, o deploy não será realizado`
     )
-    return
+    return res.sendStatus(200)
   }
 
   req.deployApp.pendingDeploy = true

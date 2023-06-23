@@ -29,6 +29,7 @@ import { LogsMenu } from './logs-menu'
 export const GLOBAL_STATUSES: Record<string, [number, string, string, any, boolean, number]> = {
   stop: [0, 'Parando aplicação', 'blue', MdStop, true, 0],
   backup: [5, 'Fazendo backup', 'blue', MdBackup, true, 0],
+  backupBroken: [5, 'Fazendo backup do servidor com problemas', 'orange', MdBackup, true, 0],
   reset: [20, 'Resetando códigos', 'blue', MdCleaningServices, true, 0],
   clean: [23, 'Limpando arquivos extras', 'blue', MdCleaningServices, true, 0],
   pull: [26, 'Baixando versão mais recente', 'blue', MdOutlineFileDownload, true, 0],

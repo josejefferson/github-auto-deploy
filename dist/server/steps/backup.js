@@ -60,7 +60,7 @@ function backupServer(app, broken) {
                 case 0:
                     if (app.backupAbsolutePath === null)
                         return [2 /*return*/];
-                    app.status = 'backup';
+                    app.status = broken ? 'backupBroken' : 'backup';
                     (0, realtime_1.sendUpdate)(app, 'status');
                     (0, helpers_1.log)('INFO', "Fazendo backup do servidor".concat(broken ? ' com problemas' : ''));
                     backupFolderName = path_1.default.basename(app.folderAbsolutePath) + '-backups';

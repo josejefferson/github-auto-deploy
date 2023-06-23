@@ -14,7 +14,7 @@ const MAX_BACKUPS = 10
  */
 export async function backupServer(app: IAppState, broken = false) {
   if (app.backupAbsolutePath === null) return
-  app.status = 'backup'
+  app.status = broken ? 'backupBroken' : 'backup'
   sendUpdate(app, 'status')
   log('INFO', `Fazendo backup do servidor${broken ? ' com problemas' : ''}`)
 

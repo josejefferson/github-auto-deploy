@@ -42,6 +42,7 @@ export interface IAppState extends IApp {
   status:
     | 'stop'
     | 'backup'
+    | 'backupBroken'
     | 'reset'
     | 'clean'
     | 'pull'

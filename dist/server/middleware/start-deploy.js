@@ -9,7 +9,7 @@ function startDeploy(req, res) {
     if (process.env.NODE_ENV !== 'development' &&
         ((_a = req.body) === null || _a === void 0 ? void 0 : _a.ref) !== "refs/heads/".concat(req.deployApp.gitBranch)) {
         (0, helpers_1.log)('WARNING', "O commit n\u00E3o pertence \u00E0 branch ".concat(req.deployApp.gitBranch, ", o deploy n\u00E3o ser\u00E1 realizado"));
-        return;
+        return res.sendStatus(200);
     }
     req.deployApp.pendingDeploy = true;
     (0, realtime_1.sendUpdate)(req.deployApp, 'pendingDeploy');
