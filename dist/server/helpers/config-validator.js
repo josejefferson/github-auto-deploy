@@ -36,7 +36,7 @@ var configSchema = (0, yup_1.object)({
         resetCommand: (0, yup_1.string)().nullable().default('git reset --hard'),
         cleanCommand: (0, yup_1.string)().nullable().default('git clean -f -d'),
         pullCommand: (0, yup_1.string)().nullable().default('git pull'),
-        installCommand: (0, yup_1.string)().nullable().default('yarn'),
+        installCommand: (0, yup_1.string)().nullable().default('yarn install --production=false'),
         buildCommand: (0, yup_1.string)().nullable().default('yarn build'),
         undoWhenFailed: (0, yup_1.boolean)().default(true)
     }).required()).required(),

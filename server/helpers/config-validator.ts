@@ -36,7 +36,7 @@ const configSchema = object({
       resetCommand: string().nullable().default('git reset --hard'),
       cleanCommand: string().nullable().default('git clean -f -d'),
       pullCommand: string().nullable().default('git pull'),
-      installCommand: string().nullable().default('yarn'),
+      installCommand: string().nullable().default('yarn install --production=false'),
       buildCommand: string().nullable().default('yarn build'),
       undoWhenFailed: boolean().default(true)
     }).required()
