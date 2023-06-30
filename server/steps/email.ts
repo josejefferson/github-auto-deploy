@@ -58,7 +58,7 @@ export function sendStartUndoDeployEmail(app: IAppState) {
  */
 export function sendUndoDeployEmail(app: IAppState) {
   const time = Math.round((Date.now() - app.deployStartTime) / 1000)
-  const title = '✅ Deploy desfeito'
+  const title = 'ℹ Deploy desfeito'
   let body = `
 		O deploy da aplicação <b>${app.displayName}</b> foi desfeito com sucesso<br><br>
     <h3>DETALHES</h3>
