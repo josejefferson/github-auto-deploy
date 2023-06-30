@@ -20,8 +20,10 @@ exports.sendStartDeployEmail = sendStartDeployEmail;
  * Envia um e-mail avisando o sucesso do deploy
  */
 function sendSuccessDeployEmail(app) {
+    var time = Math.round((Date.now() - app.deployStartTime) / 1000);
+    app.deployTime = time;
     var title = '✅ Deploy finalizado com sucesso';
-    var body = "\n\t\tO deploy da aplica\u00E7\u00E3o <b>".concat(app.displayName, "</b> foi finalizado com sucesso!<br><br>\n    <h3>DETALHES</h3>\n    <ul>\n\t\t\t<li><b>Tempo:</b> ").concat(app.deployTime, " segundos</li>\n    </ul>\n\t");
+    var body = "\n\t\tO deploy da aplica\u00E7\u00E3o <b>".concat(app.displayName, "</b> foi finalizado com sucesso!<br><br>\n    <h3>DETALHES</h3>\n    <ul>\n\t\t\t<li><b>Tempo:</b> ").concat(time, " segundos</li>\n    </ul>\n\t");
     body += (0, helpers_1.makeEmailLogs)(app);
     sendEmail(app, title, body);
 }
@@ -50,7 +52,7 @@ exports.sendStartUndoDeployEmail = sendStartUndoDeployEmail;
  */
 function sendUndoDeployEmail(app) {
     var time = Math.round((Date.now() - app.deployStartTime) / 1000);
-    var title = '✅ Deploy desfeito';
+    var title = 'ℹ Deploy desfeito';
     var body = "\n\t\tO deploy da aplica\u00E7\u00E3o <b>".concat(app.displayName, "</b> foi desfeito com sucesso<br><br>\n    <h3>DETALHES</h3>\n    <ul>\n\t\t\t<li><b>Tempo:</b> ").concat(time, " segundos</li>\n    </ul>\n\t");
     body += (0, helpers_1.makeEmailLogs)(app);
     sendEmail(app, title, body);

@@ -18,12 +18,14 @@ export function sendStartDeployEmail(app: IAppState) {
  * Envia um e-mail avisando o sucesso do deploy
  */
 export function sendSuccessDeployEmail(app: IAppState) {
+  const time = Math.round((Date.now() - app.deployStartTime) / 1000)
+  app.deployTime = time
   const title = '✅ Deploy finalizado com sucesso'
   let body = `
 		O deploy da aplicação <b>${app.displayName}</b> foi finalizado com sucesso!<br><br>
     <h3>DETALHES</h3>
     <ul>
-			<li><b>Tempo:</b> ${app.deployTime} segundos</li>
+			<li><b>Tempo:</b> ${time} segundos</li>
     </ul>
 	`
   body += makeEmailLogs(app)
