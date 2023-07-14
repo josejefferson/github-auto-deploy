@@ -7,12 +7,20 @@ import {
   ModalOverlay
 } from '@chakra-ui/react'
 
-export default function LogsModal({ log, setLog }: { log: string; setLog: (log: string) => any }) {
+export default function LogsModal({
+  log,
+  open,
+  onClose
+}: {
+  log: string
+  open: boolean
+  onClose: () => any
+}) {
   return (
     <>
-      <Modal isOpen={!!log} onClose={() => setLog('')}>
+      <Modal isOpen={open} onClose={onClose}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent w="full" maxW="6xl">
           <ModalHeader>Visualizador de logs</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6} overflow="auto">

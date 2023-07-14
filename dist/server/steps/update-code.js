@@ -41,35 +41,37 @@ var realtime_1 = require("../config/realtime");
 var helpers_1 = require("../helpers/helpers");
 function resetAndClean(app) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, error, stdout, stderr, _b, error, stdout, stderr;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var error, error;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     if (!(app.resetCommand !== null)) return [3 /*break*/, 2];
                     app.status = 'reset';
                     (0, realtime_1.sendUpdate)(app, 'status');
                     (0, helpers_1.log)('INFO', 'Resetando o repositório');
-                    return [4 /*yield*/, (0, helpers_1.run)(app, app.resetCommand)];
+                    return [4 /*yield*/, (0, helpers_1.run)(app, app.resetCommand, function (log) {
+                            app.logs.reset += log;
+                            (0, realtime_1.sendUpdate)(app, 'logs.reset');
+                        })];
                 case 1:
-                    _a = _c.sent(), error = _a.error, stdout = _a.stdout, stderr = _a.stderr;
-                    app.logs.reset += [stdout, stderr].join('\n');
-                    (0, realtime_1.sendUpdate)(app, 'logs.reset');
+                    error = (_a.sent()).error;
                     if (error)
                         throw error;
-                    _c.label = 2;
+                    _a.label = 2;
                 case 2:
                     if (!(app.cleanCommand !== null)) return [3 /*break*/, 4];
                     app.status = 'clean';
                     (0, realtime_1.sendUpdate)(app, 'status');
                     (0, helpers_1.log)('INFO', 'Limpando o repositório');
-                    return [4 /*yield*/, (0, helpers_1.run)(app, app.cleanCommand)];
+                    return [4 /*yield*/, (0, helpers_1.run)(app, app.cleanCommand, function (log) {
+                            app.logs.clean += log;
+                            (0, realtime_1.sendUpdate)(app, 'logs.clean');
+                        })];
                 case 3:
-                    _b = _c.sent(), error = _b.error, stdout = _b.stdout, stderr = _b.stderr;
-                    app.logs.clean += [stdout, stderr].join('\n');
-                    (0, realtime_1.sendUpdate)(app, 'logs.clean');
+                    error = (_a.sent()).error;
                     if (error)
                         throw error;
-                    _c.label = 4;
+                    _a.label = 4;
                 case 4: return [2 /*return*/];
             }
         });
@@ -78,20 +80,21 @@ function resetAndClean(app) {
 exports.resetAndClean = resetAndClean;
 function pull(app) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, error, stdout, stderr;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var error;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     if (app.pullCommand === null)
                         return [2 /*return*/];
                     app.status = 'pull';
                     (0, realtime_1.sendUpdate)(app, 'status');
                     (0, helpers_1.log)('INFO', 'Baixando atualizações');
-                    return [4 /*yield*/, (0, helpers_1.run)(app, app.pullCommand)];
+                    return [4 /*yield*/, (0, helpers_1.run)(app, app.pullCommand, function (log) {
+                            app.logs.pull += log;
+                            (0, realtime_1.sendUpdate)(app, 'logs.pull');
+                        })];
                 case 1:
-                    _a = _b.sent(), error = _a.error, stdout = _a.stdout, stderr = _a.stderr;
-                    app.logs.pull += [stdout, stderr].join('\n');
-                    (0, realtime_1.sendUpdate)(app, 'logs.pull');
+                    error = (_a.sent()).error;
                     if (error)
                         throw error;
                     return [2 /*return*/];

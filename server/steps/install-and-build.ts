@@ -10,9 +10,10 @@ export async function install(app: IAppState) {
   app.status = 'install'
   sendUpdate(app, 'status')
   log('INFO', 'Instalando dependências')
-  const { error, stdout, stderr } = await run(app, app.installCommand)
-  app.logs.install += [stdout, stderr].join('\n')
-  sendUpdate(app, 'logs.install')
+  const { error } = await run(app, app.installCommand, (log) => {
+    app.logs.install += log
+    sendUpdate(app, 'logs.install')
+  })
   if (error) throw error
 }
 
@@ -24,8 +25,9 @@ export async function build(app: IAppState) {
   app.status = 'build'
   sendUpdate(app, 'status')
   log('INFO', 'Realizando o build')
-  const { error, stdout, stderr } = await run(app, app.buildCommand)
-  app.logs.build += [stdout, stderr].join('\n')
-  sendUpdate(app, 'logs.build')
+  const { error } = await run(app, app.buildCommand, (log) => {
+    app.logs.build += log
+    sendUpdate(app, 'logs.build')
+  })
   if (error) throw error
 }

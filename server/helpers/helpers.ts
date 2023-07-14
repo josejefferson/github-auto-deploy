@@ -1,6 +1,6 @@
 import { compareSync } from 'bcrypt'
 import chalk from 'chalk'
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
 import { IAppState } from '../types'
 
 export function sleep(time: number) {
@@ -9,12 +9,49 @@ export function sleep(time: number) {
   })
 }
 
-export function run(app: IAppState, command: string) {
+export function formattedDate(date = new Date()) {
+  const day = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  const seconds = date.getSeconds().toString().padStart(2, '0')
+  const formattedDate = `${day}/${month} ${hours}:${minutes}:${seconds}`
+  return formattedDate
+}
+
+interface IRunResult {
+  error: Error
+  output: string
+  code: number | null
+}
+
+type ICallback = (log: string) => any
+
+export function run(app: IAppState, command: string, callback?: ICallback) {
   if (process.env.NODE_ENV === 'development') console.log('$', command)
-  return new Promise<{ error: any; stdout: string; stderr: string }>((resolve) => {
-    exec(command, { cwd: app.folderAbsolutePath }, (error, stdout, stderr) => {
-      resolve({ error, stdout, stderr })
-    })
+
+  return new Promise<IRunResult>((resolve) => {
+    let output = ''
+    let error: Error
+    const cmd = command.split(' ')
+    const running = spawn(cmd[0], cmd.slice(1), { shell: true, cwd: app.folderAbsolutePath })
+
+    function logOutput(emoji: string) {
+      return (data: string) => {
+        const formattedOutput = data
+          .toString()
+          .split('\n')
+          .map((d) => (d === '' ? '' : `${formattedDate()} ${emoji} ${d}`))
+          .join('\n')
+        output += formattedOutput
+        callback?.(formattedOutput)
+      }
+    }
+
+    running.stdout.on('data', logOutput('📄'))
+    running.stderr.on('data', logOutput('❌'))
+    running.on('error', (err) => (error = err))
+    running.on('close', (code) => resolve({ error, output, code }))
   })
 }
 

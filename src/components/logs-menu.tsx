@@ -9,53 +9,35 @@ export function LogsMenu({ logs }: { logs: IAppState['logs'] }) {
   return (
     <Menu isLazy>
       <Tooltip label="Logs">
-        <MenuButton
-          hidden={!logs.reset && !logs.clean && !logs.pull && !logs.install && !logs.build}
-        >
+        <MenuButton>
           <IconButton aria-label="Logs" variant="ghost" ml={2} color="inherit">
             <MdTextSnippet size={24} />
           </IconButton>
         </MenuButton>
       </Tooltip>
       <MenuList zIndex="2">
-        <MenuItem
-          hidden={!logs.reset}
-          icon={<MdTextSnippet />}
-          onClick={() => setOpenLog(logs.reset)}
-        >
-          Reset logs
+        <MenuItem icon={<MdTextSnippet />} onClick={() => setOpenLog('reset')}>
+          Reset logs ({Math.max(0, logs.reset.split('\n').length - 1)})
         </MenuItem>
-        <MenuItem
-          hidden={!logs.clean}
-          icon={<MdTextSnippet />}
-          onClick={() => setOpenLog(logs.clean)}
-        >
-          Clean logs
+        <MenuItem icon={<MdTextSnippet />} onClick={() => setOpenLog('clean')}>
+          Clean logs ({Math.max(0, logs.clean.split('\n').length - 1)})
         </MenuItem>
-        <MenuItem
-          hidden={!logs.pull}
-          icon={<MdTextSnippet />}
-          onClick={() => setOpenLog(logs.pull)}
-        >
-          Pull logs
+        <MenuItem icon={<MdTextSnippet />} onClick={() => setOpenLog('pull')}>
+          Pull logs ({Math.max(0, logs.pull.split('\n').length - 1)})
         </MenuItem>
-        <MenuItem
-          hidden={!logs.install}
-          icon={<MdTextSnippet />}
-          onClick={() => setOpenLog(logs.install)}
-        >
-          Install logs
+        <MenuItem icon={<MdTextSnippet />} onClick={() => setOpenLog('install')}>
+          Install logs ({Math.max(0, logs.install.split('\n').length - 1)})
         </MenuItem>
-        <MenuItem
-          hidden={!logs.build}
-          icon={<MdTextSnippet />}
-          onClick={() => setOpenLog(logs.build)}
-        >
-          Build logs
+        <MenuItem icon={<MdTextSnippet />} onClick={() => setOpenLog('build')}>
+          Build logs ({Math.max(0, logs.build.split('\n').length - 1)})
         </MenuItem>
       </MenuList>
 
-      <LogsModal log={openLog} setLog={setOpenLog} />
+      <LogsModal open={openLog === 'reset'} log={logs.reset} onClose={() => setOpenLog('')} />
+      <LogsModal open={openLog === 'clean'} log={logs.clean} onClose={() => setOpenLog('')} />
+      <LogsModal open={openLog === 'pull'} log={logs.pull} onClose={() => setOpenLog('')} />
+      <LogsModal open={openLog === 'install'} log={logs.install} onClose={() => setOpenLog('')} />
+      <LogsModal open={openLog === 'build'} log={logs.build} onClose={() => setOpenLog('')} />
     </Menu>
   )
 }

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authorizer = exports.getDeepValue = exports.makeEmailLogs = exports.log = exports.random = exports.run = exports.sleep = void 0;
+exports.authorizer = exports.getDeepValue = exports.makeEmailLogs = exports.log = exports.random = exports.run = exports.formattedDate = exports.sleep = void 0;
 var bcrypt_1 = require("bcrypt");
 var chalk_1 = __importDefault(require("chalk"));
 var child_process_1 = require("child_process");
@@ -22,13 +22,40 @@ function sleep(time) {
     });
 }
 exports.sleep = sleep;
-function run(app, command) {
+function formattedDate(date) {
+    if (date === void 0) { date = new Date(); }
+    var day = date.getDate().toString().padStart(2, '0');
+    var month = (date.getMonth() + 1).toString().padStart(2, '0');
+    var hours = date.getHours().toString().padStart(2, '0');
+    var minutes = date.getMinutes().toString().padStart(2, '0');
+    var seconds = date.getSeconds().toString().padStart(2, '0');
+    var formattedDate = "".concat(day, "/").concat(month, " ").concat(hours, ":").concat(minutes, ":").concat(seconds);
+    return formattedDate;
+}
+exports.formattedDate = formattedDate;
+function run(app, command, callback) {
     if (process.env.NODE_ENV === 'development')
         console.log('$', command);
     return new Promise(function (resolve) {
-        (0, child_process_1.exec)(command, { cwd: app.folderAbsolutePath }, function (error, stdout, stderr) {
-            resolve({ error: error, stdout: stdout, stderr: stderr });
-        });
+        var output = '';
+        var error;
+        var cmd = command.split(' ');
+        var running = (0, child_process_1.spawn)(cmd[0], cmd.slice(1), { shell: true, cwd: app.folderAbsolutePath });
+        function logOutput(emoji) {
+            return function (data) {
+                var formattedOutput = data
+                    .toString()
+                    .split('\n')
+                    .map(function (d) { return (d === '' ? '' : "".concat(formattedDate(), " ").concat(emoji, " ").concat(d)); })
+                    .join('\n');
+                output += formattedOutput;
+                callback === null || callback === void 0 ? void 0 : callback(formattedOutput);
+            };
+        }
+        running.stdout.on('data', logOutput('📄'));
+        running.stderr.on('data', logOutput('❌'));
+        running.on('error', function (err) { return (error = err); });
+        running.on('close', function (code) { return resolve({ error: error, output: output, code: code }); });
     });
 }
 exports.run = run;

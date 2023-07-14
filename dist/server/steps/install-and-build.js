@@ -44,20 +44,21 @@ var helpers_1 = require("../helpers/helpers");
  */
 function install(app) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, error, stdout, stderr;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var error;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     if (app.installCommand === null)
                         return [2 /*return*/];
                     app.status = 'install';
                     (0, realtime_1.sendUpdate)(app, 'status');
                     (0, helpers_1.log)('INFO', 'Instalando dependências');
-                    return [4 /*yield*/, (0, helpers_1.run)(app, app.installCommand)];
+                    return [4 /*yield*/, (0, helpers_1.run)(app, app.installCommand, function (log) {
+                            app.logs.install += log;
+                            (0, realtime_1.sendUpdate)(app, 'logs.install');
+                        })];
                 case 1:
-                    _a = _b.sent(), error = _a.error, stdout = _a.stdout, stderr = _a.stderr;
-                    app.logs.install += [stdout, stderr].join('\n');
-                    (0, realtime_1.sendUpdate)(app, 'logs.install');
+                    error = (_a.sent()).error;
                     if (error)
                         throw error;
                     return [2 /*return*/];
@@ -71,20 +72,21 @@ exports.install = install;
  */
 function build(app) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, error, stdout, stderr;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var error;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     if (app.buildCommand === null)
                         return [2 /*return*/];
                     app.status = 'build';
                     (0, realtime_1.sendUpdate)(app, 'status');
                     (0, helpers_1.log)('INFO', 'Realizando o build');
-                    return [4 /*yield*/, (0, helpers_1.run)(app, app.buildCommand)];
+                    return [4 /*yield*/, (0, helpers_1.run)(app, app.buildCommand, function (log) {
+                            app.logs.build += log;
+                            (0, realtime_1.sendUpdate)(app, 'logs.build');
+                        })];
                 case 1:
-                    _a = _b.sent(), error = _a.error, stdout = _a.stdout, stderr = _a.stderr;
-                    app.logs.build += [stdout, stderr].join('\n');
-                    (0, realtime_1.sendUpdate)(app, 'logs.build');
+                    error = (_a.sent()).error;
                     if (error)
                         throw error;
                     return [2 /*return*/];

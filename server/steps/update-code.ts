@@ -7,9 +7,10 @@ export async function resetAndClean(app: IAppState) {
     app.status = 'reset'
     sendUpdate(app, 'status')
     log('INFO', 'Resetando o repositório')
-    const { error, stdout, stderr } = await run(app, app.resetCommand)
-    app.logs.reset += [stdout, stderr].join('\n')
-    sendUpdate(app, 'logs.reset')
+    const { error } = await run(app, app.resetCommand, (log) => {
+      app.logs.reset += log
+      sendUpdate(app, 'logs.reset')
+    })
     if (error) throw error
   }
 
@@ -17,9 +18,10 @@ export async function resetAndClean(app: IAppState) {
     app.status = 'clean'
     sendUpdate(app, 'status')
     log('INFO', 'Limpando o repositório')
-    const { error, stdout, stderr } = await run(app, app.cleanCommand)
-    app.logs.clean += [stdout, stderr].join('\n')
-    sendUpdate(app, 'logs.clean')
+    const { error } = await run(app, app.cleanCommand, (log) => {
+      app.logs.clean += log
+      sendUpdate(app, 'logs.clean')
+    })
     if (error) throw error
   }
 }
@@ -29,8 +31,9 @@ export async function pull(app: IAppState) {
   app.status = 'pull'
   sendUpdate(app, 'status')
   log('INFO', 'Baixando atualizações')
-  const { error, stdout, stderr } = await run(app, app.pullCommand)
-  app.logs.pull += [stdout, stderr].join('\n')
-  sendUpdate(app, 'logs.pull')
+  const { error } = await run(app, app.pullCommand, (log) => {
+    app.logs.pull += log
+    sendUpdate(app, 'logs.pull')
+  })
   if (error) throw error
 }
